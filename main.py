@@ -1,5 +1,6 @@
 # a tkinter pixel drawing program
 import tkinter as tk
+from tkinter import filedialog as fd
 import json
 
 # create a window
@@ -12,17 +13,11 @@ canvas_width = 501
 canvas_height = 501
 grid_size = 20
 
-
 # create a canvas
-canvas = tk.Canvas(root, width=canvas_width, height=canvas_height)
+canvas = tk.Canvas(root, width=canvas_width, height=canvas_height, scrollregion=(0, 0, canvas_width, canvas_height), bg="white")
 canvas.pack()
-# offset the canvas so that the grid is centered
-canvas.config(scrollregion=(0, 0, canvas_width, canvas_height))
 
-# set the canvas background color to white
-canvas.configure(background="white")
-
-# make the drawing grid of 10x10
+# make the drawing grid of the grid_dimensions
 for i in range(grid_size):
     for j in range(grid_size):
         canvas.create_rectangle(i*grid_dimensions, j*grid_dimensions, (i+1)*grid_dimensions, (j+1)*grid_dimensions, fill="white")
@@ -42,7 +37,7 @@ def change_color(new_color):
 # create a color picker button for each color
 for color in ["red", "orange", "yellow", "green", "blue", "purple", "black", "white"]:
     # create a button
-    button = tk.Button(colorBar, text=color, width=3, command=lambda c=color: change_color(c))
+    button = tk.Button(colorBar, text=color, width=3, command=lambda c=color: change_color(c), highlightbackground=color)
     # pack the button
     button.pack(side=tk.LEFT)
 
@@ -69,18 +64,21 @@ def save_canvas():
             row.append(canvas.itemcget(rectangle, "fill"))
         canvas_list.append(row)
 
-    # save the canvas as a json file
-    with open("canvas.json", "w") as f:
-        json.dump(canvas_list, f)
+    files = [('JSON', '*.json')]
+    file = fd.asksaveasfile(filetypes = files, defaultextension = files)
+    if file is not None:
+        # save the canvas to a json file
+        with open(file.name, "w") as f:
+            json.dump(canvas_list, f)
 
 def load_canvas():
-    # load the canvas from a json file
-    with open("canvas.json", "r") as f:
-        canvas_list = json.load(f)
-    # set the canvas to the loaded canvas
-    for i in range(grid_size):
-        for j in range(grid_size):
-            canvas.itemconfig(canvas.find_closest(i*grid_dimensions, j*grid_dimensions), fill=canvas_list[i][j])
+    filename = fd.askopenfilename()
+    if filename:
+        with open(filename, "r") as f:
+            canvas_list = json.load(f)
+        for i in range(grid_size):
+            for j in range(grid_size):
+                canvas.itemconfig(canvas.find_closest(i*grid_dimensions, j*grid_dimensions), fill=canvas_list[i][j])
 
 
 clearButton = tk.Button(toolBar, text="Clear", command=clear_canvas)
